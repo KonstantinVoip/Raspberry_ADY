@@ -1,24 +1,20 @@
 /********************************************************************************************************
 *
-* File                : AT24Cxx.c
-* Hardware Environment:	DVK501 && F020+ EX
-* Build Environment   : Silicon LABs 3.42.00 20100913
+* File                : kn019_main.c
+* Hardware Environment:	
+* Build Environment   : 
 * Version             : 
-* By                  : Su Wei Feng
-*
-*                                  (c) Copyright 2005-2010, WaveShare
-*                                       http://www.waveshare.net
-*                                          All Rights Reserved
-*
+* By                  : 
 *********************************************************************************************************/
-#include <inc/compiler_defs.h>    
-#include <inc/C8051F912_defs.h>
+//#include <inc/compiler_defs.h>    
+//#include <inc/C8051F912_defs.h>
 
-
+#include <compiler_defs.h>    
+#include <C8051F912_defs.h>
 
 
 //Local Include Files 
-#include <inc/c8051_f902_delay.h> //Реализация временных задержек.
+#include <c8051_f902_delay.h> //Реализация временных задержек.
 	   
 		
 		#define   SYSCLK          24500000L        //System clock frequency in 24500000 (24.5 Mhz)		
@@ -46,8 +42,10 @@
 //Function Prototype
   void select_oscilator();
   void port_init();
-  void Wait_MS_timer2(unsigned int ms);
-  void T0_Waitms(unsigned int ms);
+  
+  
+  
+
 /*****************************************************************************
 Syntax: !!!!!!!!!!!!!!!!!!!! void main(void)  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 Remarks:MAIN Functions			    
@@ -91,9 +89,11 @@ void main(void)
 	 for(;;)
 	 {
 	    SCL = 0;
-		Wait_MS_timer2(2);  
-        SCL = 1;	 
-        Wait_MS_timer2(2);
+		//Wait_MS_timer2(1);  
+          Wait_Sec_timer2(0);
+		SCL = 1;	 
+          Wait_Sec_timer2(0);
+		//Wait_MS_timer2(1);
 	 }
 
 
@@ -134,7 +134,7 @@ void select_oscilator()
   do
   {	 
   sysclk_rdy = (CLKSEL >> 7) ;	     	
-  }while(!sysclk_rdy);                  			 //Zdes Proverks clock Ready   
+  }while(!sysclk_rdy);                  			//Zdes Proverks clock Ready   
 
 }
 
@@ -156,75 +156,14 @@ void port_init()
 
 
 
-//-----------------------------------------------------------------------------
-// Wait_MS
-//-----------------------------------------------------------------------------
-//
-// Return Value : None
-// Parameters:
-//   1) unsigned int ms - number of milliseconds of delay
-//                        range is full range of integer: 0 to 65335
-//
-// This routine inserts a delay of <ms> milliseconds.
-//
-//-----------------------------------------------------------------------------
-void Wait_MS_timer2(unsigned int ms)
-{
-
-   CKCON &= ~0x20;                     // use SYSCLK/12 as timebase
-
-   TMR2RL = -(SYSCLK/1000/12);         // Timer 2 overflows at 1 kHz
-   TMR2 = TMR2RL;
-
-   ET2 = 0;                            // Disable Timer 2 interrupts
-
-   TR2 = 1;                            // Start Timer 2
-
-   while(ms)
-   {
-      TF2H = 0;                         // Clear flag to initialize
-      while(!TF2H);                     // Wait until timer overflows
-      ms--;                            // Decrement ms
-   }
-
-   TR2 = 0;                            // Stop Timer 2
-
-}
 
 
 
-//-----------------------------------------------------------------------------
-// T0_Waitms
-//-----------------------------------------------------------------------------
-//
-// Return Value : None
-// Parameters   :
-//   1) U8 ms - number of milliseconds to wait range is full range of character: 0 to 255
-// Configure Timer0 to wait for <ms> milliseconds using SYSCLK as its time
-// base.
-//
-//-----------------------------------------------------------------------------
-void T0_Waitms (unsigned int ms)
-{
-   TCON &= ~0x30;                      // Stop Timer0; Clear TF0
-   TMOD &= ~0x0f;                      // 16-bit free run mode
-   TMOD |=  0x01;
 
-   CKCON |= 0x04;                      // Timer0 counts SYSCLKs
 
-   while (ms)
-   {
-      TR0 = 0;                         // Stop Timer0
-      TH0 = ((-SYSCLK/1000) >> 8);     // Overflow in 1ms
-      TL0 = ((-SYSCLK/1000) & 0xFF);
-      TF0 = 0;                         // Clear overflow indicator
-      TR0 = 1;                         // Start Timer0
-      while (!TF0);                    // Wait for overflow
-      ms--;                            // Update ms counter
-   }
 
-   TR0 = 0;                            // Stop Timer0
-}
+
+
 
 
 

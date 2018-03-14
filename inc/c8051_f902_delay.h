@@ -19,12 +19,12 @@
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 
-    /* CPU C8051F902  SYSCLK = 24.5 [ћгц] = 24 500 000 [√ц]  TIMER_16_bit = 0xFFFF = 65535
+   /*  CPU C8051F902  SYSCLK = 24.5 [ћгц] = 24 500 000 [√ц]  TIMER_16_bit = 0xFFFF = 65535
     *  
     *  -----------------------------------------------------------------------------------------------------
     *  ¬ременной предел таймера.
@@ -93,8 +93,12 @@ extern "C" {
  таймера одно прерывание соответсвенно 1 микросекунда =1 прерывние;1 миллисекунда = 1 прерывание ; 0.5 секунд =1 прерывние.
   */
  //
+void T0_Waitms(unsigned int ms);
 
 
+void Wait_MS_timer2(unsigned int ms);
+void Wait_Sec_timer2(unsigned int second);
+void Wait_microsecond_timer2(unsigned int microsecond);
 //‘ункции работы с временем вспомогательные
 /*функци€ задержки в количестве while */
 void  while_delay(unsigned long counter);
@@ -158,9 +162,9 @@ void  while_delay(unsigned long counter);
 
 
  //ƒругие функции
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 
 

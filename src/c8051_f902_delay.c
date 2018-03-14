@@ -17,22 +17,16 @@
 *
 *
 ******************************************************************************/
-//—екунды
-#define timer_05sec_delay_24      0x00B71B00   //12 000 000[тиков]   = 0.5   [секунд]  при частоте  TIM_CLK1 = 24[мгц]  | Systimer[HCLK] = 24 [мгц]
-#define timer_0125sec_delay_96    0x00B71B00   //12000000[тиков]     = 0.125 [секунд]  при частоте  Systimer[HCLK] = 96 [мгц]
 
-//ћиллисекунды
-#define timer_1ms_delay_24        0x00005DC0   //24000 тиков       = 1 [мс]  при частоте TIM_CLK1 = 24[мгц]  | Systimer[HCLK] = 24 [мгц]
-#define timer_1ms_delay_96        0x00017700   //96000 тиков       = 1 [мс]  при частоте Systimer[HCLK] = 96 [мгц]
-//ћикросекунды
-#define timer_1mks_delay_24       0x00000018   //24    тика        = 1 [м с] при частоте TIM_CLK1 = 24[мгц]   | Systimer[HCLK] = 24 [мгц]
-#define timer_10mks_delay_24      0x000000F0   //240   тиков       = 10 [м с] при частоте TIM_CLK1 = 24[мгц]  | Systimer[HCLK] = 24 [мгц]
-#define timer_100mks_delay_24     0x00000960   //2400  тиков       = 100[мкс] при частоте TIM_CLK1 = 24[мгц]  | Systimer[HCLK] = 24 [мгц]
- 
-#define timer_1mks_delay_96       0x00000060  //96    тиков       1 [м с] при частоте Systimer[HCLK] = 96 [мгц]
+//------------------------------------------------------------------------------------------------------------------  
+#include <compiler_defs.h>    
+#include <C8051F912_defs.h>
 
-//------------------------------------------------------------------------------------------------------------------
-#include <inc/c8051_f902_delay.h>
+
+
+#include <c8051_f902_delay.h>
+
+
 
 
 
@@ -108,11 +102,75 @@ Remarks:            возвращаем значение текущего тика из регистра
 
 
 /////////////////////////////////////‘ункции –еализации «адержки///////////////////////////////
+//-----------------------------------------------------------------------------
+// Wait_MS
+//-----------------------------------------------------------------------------
+//
+// Return Value : None
+// Parameters:
+//   1) unsigned int ms - number of milliseconds of delay
+//                        range is full range of integer: 0 to 65335
+// This routine inserts a delay of <ms> milliseconds.
+// [16-bit auto-reload mode] _ timer2  - >> [T2SPLIT_bit=0] TIMER_2_CN p.289
+// use SYSCLK 24500 
+//
+//
+//
+//-----------------------------------------------------------------------------
+void Wait_MS_timer2(unsigned int ms)     //for 0 = 8 [мкс]
+{
+     CKCON = 0x10;                       //Timer use System CLK 24.5[Mhz]
+
+
+    //TMR2RL_ =   Timer_2 Reload  16 bit value  
+    //TMR2    =   Timer_2 Counter 16 bit value
+                                                         //60000 - [1 мс  !!Succesful!!]
+     TMR2RL=60000;//61554;//20518; //41036;              //20518 - [8 мс] //61554 - [700 м с] //64000 - 280[м с] //65000 - 110[м с] //65400 - 36[м с]
+     TMR2 = TMR2RL;                                      //65500 - [16 м с] -- наступает предел GPIO pin
+
+     ET2 = 0;                             // Disable Timer 2 interrupts
+     TR2 = 1;                             // Start Timer 2
+
+	 while(ms)
+	 {
+	      TF2H = 0;                         // Clear flag to initialize
+	      while(!TF2H);                     // Wait until timer overflows
+	      ms--;                             // Decrement ms
+	 }
+
+	 TR2 = 0;                               // Stop Timer 2
+ 
+}
 /*******************************************************************************
-* Function Name  : void  sys_timer_delay_ticks(unsigned int ticks)
-* Description    : функци€ выставл€ет задержки в “» ј’ системного таймера в зависимости от частоты HCLK те процессора.
-* Input          : таймер 24 разр€дный максимальное значение тиков 0x00FFFFFF [16 777 215]
-*******************************************************************************/  
+* Function Name  : SysTick_GetCounter
+* Description    : Gets SysTick counter value.
+* Input          : None
+* Output         : None
+* Return         : SysTick current value
+*******************************************************************************/
+void Wait_Sec_timer2(unsigned int second)
+{
+
+	 CKCON = 0x10;                       			//Timer use System CLK 24.5[Mhz]
+    //TMR2RL_ =   Timer_2 Reload  16 bit value  
+    //TMR2    =   Timer_2 Counter 16 bit value
+                                                    //60000 - [1 мс  !!Succesful!!]
+     TMR2RL=10;//1000;//20000;//60000;                  //10000 = 10 [мс]        //20000 - [8 мс  !!Succesful!!]
+     TMR2 = TMR2RL;                                  //1000 - 12 [мс]    
+
+     ET2 = 0;                             // Disable Timer 2 interrupts
+     TR2 = 1;                             // Start Timer 2
+
+	 while(second)
+	 {
+	      TF2H = 0;                         // Clear flag to initialize
+	      while(!TF2H);                     // Wait until timer overflows
+	      second--;                             // Decrement ms
+	 }
+
+	 TR2 = 0;                               // Stop Timer 2
+
+}
 
 
 
@@ -147,6 +205,39 @@ void  while_delay(unsigned long counter)
 
 
 
+//-----------------------------------------------------------------------------
+// T0_Waitms
+//-----------------------------------------------------------------------------
+//
+// Return Value : None
+// Parameters   :
+//   1) U8 ms - number of milliseconds to wait range is full range of character: 0 to 255
+// Configure Timer0 to wait for <ms> milliseconds using SYSCLK as its time
+// base.
+//
+//-----------------------------------------------------------------------------
+/*
+void T0_Waitms (unsigned int ms)
+{
+   TCON &= ~0x30;                      // Stop Timer0; Clear TF0
+   TMOD &= ~0x0f;                      // 16-bit free run mode
+   TMOD |=  0x01;
 
+   CKCON |= 0x04;                      // Timer0 counts SYSCLKs
+
+   while (ms)
+   {
+      TR0 = 0;                         // Stop Timer0
+      TH0 = ((-SYSCLK/1000) >> 8);     // Overflow in 1ms
+      TL0 = ((-SYSCLK/1000) & 0xFF);
+      TF0 = 0;                         // Clear overflow indicator
+      TR0 = 1;                         // Start Timer0
+      while (!TF0);                    // Wait for overflow
+      ms--;                            // Update ms counter
+   }
+
+   TR0 = 0;                            // Stop Timer0
+}
+*/
 
 
