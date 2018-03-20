@@ -104,7 +104,7 @@ void Wait_microsecond_timer2(unsigned int microsecond);
 void  while_delay(unsigned long counter);
 /*функци€ задержки системного таймера в тиках 0-16 777 215  при частоте 24 или 96 м√ц */
 //void  sys_timer_delay_ticks(unsigned int ticks);                   //
-
+void test_delay();
 
 
 //‘ункции работы с системным “аймером (SYSTIMER)
