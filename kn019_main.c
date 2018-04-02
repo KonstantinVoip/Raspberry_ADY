@@ -209,17 +209,20 @@ void main(void)
 {
  	  U16 val=0;        
 	  U16 error=0;		                     
-     //Watch DOG TImer  Debug_kit
+       
+	
+	 //Watch DOG TImer  Debug_kit
      PCA0MD &= ~0x40;          // WDTE = 0 (clear watchdog timer enable)
      select_oscilator();
      port_init();
-
+     NH_led=0;
 
      RST_0 =0 ;  //Sbrasivaem reset from ksz and switch. to null 
      
     
 	 /* Read-write test */
-     for(val=3; val>=0; val--)
+     /*
+	 for(val=3; val>=0; val--)
   	 {
    	    mdioWrite(PHY_ADDR, REG_MAX_PAGESEL, val);
 	    if(mdioRead(PHY_ADDR, REG_MAX_PAGESEL) != val)
@@ -229,31 +232,115 @@ void main(void)
 	    }      
  	
 	 }
-
+     */
 
 
 	 /* Make the startup procedure */
      /* Selects MDIO page 2 */
-     mdioWrite(PHY_ADDR, REG_MAX_PAGESEL , 0x0012);      
+     //mdioWrite(PHY_ADDR, REG_MAX_PAGESEL , 0x0012); 
+	   maxWrite(REG_MAX_PAGESEL, 0x0012) ;     
      /* Write 0x4004 to PTPCR1 to power-down the receive CDR */
-     mdioWrite(PHY_ADDR, REG_MAX_PTPCR1 & REG_ADDR_MASK, 0x4004);            
-     /* Wait 1ms */
+      // mdioWrite(PHY_ADDR, REG_MAX_PTPCR1 & REG_ADDR_MASK, 0x4004);            
+      maxWrite(REG_MAX_PTPCR1, 0x4004) ;  
+	 
+	 /* Wait 1ms */
      //threadSleep(1);
-	 Wait_MS_timer2(1);
+	 Wait_MS_timer2(2);
      /* Write 0x4000 to PTPCR1 to power-up the receive CDR */
-     mdioWrite(PHY_ADDR, REG_MAX_PTPCR1 & REG_ADDR_MASK, 0x4000);
-     /* Set the BMCR.DP_RST bit to reset the datapath */
-     mdioWrite(PHY_ADDR, REG_MAX_PAGESEL, 0x0010);
-     mdioWrite(PHY_ADDR, REG_MAX_BMCR & REG_ADDR_MASK, 0x8000u);
+    // mdioWrite(PHY_ADDR, REG_MAX_PTPCR1 & REG_ADDR_MASK, 0x4000);
+      maxWrite(REG_MAX_PTPCR1, 0x4000); 
+	  maxWrite(REG_MAX_BMCR, 0x8000); 
+	 /* Set the BMCR.DP_RST bit to reset the datapath */
+    // mdioWrite(PHY_ADDR, REG_MAX_PAGESEL, 0x0010);
+    // mdioWrite(PHY_ADDR, REG_MAX_BMCR & REG_ADDR_MASK, 0x8000u);
 
 
 
-      //val = maxRead(REG_MAX_BMCR);  //0x0000
-      //val = maxRead(REG_MAX_BMSR);  //0x7949
-        val = maxRead(REG_MAX_ID);    //0x1ee0;
+       //GPIO3 Light_on
+       // maxWrite(REG_MAX_GPIOCR1, 0x0001) ; //Light_OFF_MAX_DEVICE
+  	   // maxWrite(REG_MAX_GPIOCR1, 0x0002) ; //Light_ON_MAX_DEVICE_GREEN     drive_ligic_1
+       // maxWrite(REG_MAX_GPIOCR1, 0x0006) ; //Output Real_TIME_LINK_STATUS
  
-  
+       //maxWrite(REG_MAX_CR, 0x0220);
+       
+	  
+//#if 0	  
+	   maxWrite(REG_MAX_CR     , 0x0320);
+	   maxWrite(REG_MAX_GPIOCR1, 0x000E) ; //Output Real_TIME_LINK_STATUS + TX_DISABLE_0
+	   maxWrite(REG_MAX_BMCR   , 0x1200) ; //Output Real_TIME_LINK_STATUS + TX_DISABLE_0
 
+
+
+       Wait_MS_timer2(100);
+       NH_led=1;
+
+       //maxWrite(enum RegMax regAddr, U16 value) 
+ //       val = maxRead(REG_MAX_BMCR);
+ //		val = maxRead(REG_MAX_BMSR);      //0x7949  
+ //       val = maxRead(REG_MAX_GMIICR);    
+ //       val = maxRead(REG_MAX_CR);
+//		val = maxRead(REG_MAX_PCSCR);
+//	    val = maxRead(REG_MAX_AN_ADV);
+//		val = maxRead(REG_MAX_ID);        //0x1ee0; //revision B
+	
+//#endif
+
+#if 0
+        /* Set outputs of GPO1 and GPO2 */
+  maxWrite(REG_MAX_GPIOCR1, 0x6 << 12  /* GPO1: Output real-time link status, 0=link down, 1=link up */
+                          | 0x6 << 9   /* GPO2: Output CRS (carrier sense) status */
+                          | 0x1 << 6   /* GPIO1: Drive logic 0 */
+                          | 0x1 << 3   /* GPIO2: Drive logic 0 */
+                          | 0x1 << 0   /* GPIO3: Drive logic 0 */
+  );
+  
+  /* Set values of GPIO4 to GPIO7 */
+  maxWrite(REG_MAX_GPIOCR2, 0x0 << 13  /* Set latched status bit when input goes low */
+                          | 0x0 << 12  /* Set latched status bit when input goes low */  
+                          | 0x1 << 9   /* GPIO7: Drive logic 0 */  
+                          | 0x1 << 6   /* GPIO6: Drive logic 0 */  
+                          | 0x1 << 3   /* GPIO5: Drive logic 0 */  
+                          | 0x1 << 0   /* GPIO4: Drive logic 0 */
+  );
+  
+  /* Set RGMII-1000 parallel interface mode */  
+  maxWrite(REG_MAX_GMIICR,  0x2 << 14  /* 1000 Mbps GMII RGMII-1000 */
+                          | 0x0 << 13  /* TBI with one 125MHz receive clock (RXCLK pin) */
+                          | 0x0 << 12  /* MII-DCE (MAX24287 on PHY side of MII, both RXCLK and TXCLK are outputs) */
+                          | 0x1 << 11  /* RGMII or RTBI bus mode */
+                          | 0x0 << 10  /* TXCLK pin is high impedance */
+                          | 0x1 << 7   /* Write as 1 */                          
+                          | 0x0 << 3   /* Noninverted */
+                          | 0x0 << 0   /* Disable remote loopback */
+  );  
+  
+  /* Set 1000BASE-X serial interface mode */
+  maxWrite(REG_MAX_PCSCR,   0x0 << 14  /* PCS link timer has normal timeout */
+                          | 0x0 << 13  /* Enable PCS receive running disparity */  
+                          | 0x0 << 12  /* Enable PCS transmit running disparity */  
+                          | 0x0 << 6   /* Restart auto-negotiation after 5 seconds */  
+                          | 0x0 << 4   /* 1000BASE-X PCS mode selected */  
+                          | 0x0 << 1   /* Disable terminal loopback */
+                          | 0x1 << 0   /* Enable comma alignment */
+  ); 
+  
+  /* Set 1000BASE-X auto-negotiation TX advertisement */
+  maxWrite(REG_MAX_AN_ADV,  0x0 << 15  /* Next Page capability is not supported */
+                          | 0x0 << 12  /* No Error, Link OK */  
+                          | 0x0 << 7   /* No Pause */  
+                          | 0x0 << 6   /* Half duplex is not supported */
+                          | 0x1 << 5   /* Advertise full duplex capability */
+  );
+
+  /* Enable auto-negotiation */
+  maxWrite(REG_MAX_BMCR, 0x0 << 15  /* No reset */
+                       | 0x0 << 14  /* Loopback diagnostic */
+                       | 0x1 << 12  /* Enable auto-negotiation process */ 
+                       | 0x1 << 9   /* Restart auto-negotiation */ 
+                       | 0x0 << 7   /* No collision test */ 
+  );  
+  
+#endif
 
 
 
@@ -286,7 +373,7 @@ void main(void)
      */
 
 
-     
+     /*
 	 for(;;)
 	 {
 	    //SCL = 0;
@@ -295,7 +382,7 @@ void main(void)
 		//SCL = 1;	 
 
 		//Wait_MS_timer2(1);
-	 }
+	 }*/
 
 
 	  ///////////	
@@ -331,6 +418,7 @@ void select_oscilator()
   {	 
   sysclk_rdy = (CLKSEL >> 7) ;	     	
   }while(!sysclk_rdy);                  			//Zdes Proverks clock Ready   
+
 
 }
 
