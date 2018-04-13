@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// compiler_defs.h
+// compiler_defs.h//
 //-----------------------------------------------------------------------------
 // Portions of this file are copyright Maarten Brock
 // http://sdcc.sourceforge.net
