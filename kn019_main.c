@@ -215,7 +215,7 @@ void main(void)
      PCA0MD &= ~0x40;          // WDTE = 0 (clear watchdog timer enable)
      select_oscilator();
      port_init();
-     NH_led=0;
+     //NH_led=0;                //Гасим Светодиод
 
      RST_0 =0 ;  //Sbrasivaem reset from ksz and switch. to null 
      
@@ -259,21 +259,22 @@ void main(void)
        //GPIO3 Light_on
        // maxWrite(REG_MAX_GPIOCR1, 0x0001) ; //Light_OFF_MAX_DEVICE
   	   // maxWrite(REG_MAX_GPIOCR1, 0x0002) ; //Light_ON_MAX_DEVICE_GREEN     drive_ligic_1
-       // maxWrite(REG_MAX_GPIOCR1, 0x0006) ; //Output Real_TIME_LINK_STATUS
+        maxWrite(REG_MAX_GPIOCR1, 0x0006) ; //Output Real_TIME_LINK_STATUS    Link /UP/or/down
  
        //maxWrite(REG_MAX_CR, 0x0220);
        
 	  
 //#if 0	  
 	   maxWrite(REG_MAX_CR     , 0x0320);
-	   maxWrite(REG_MAX_GPIOCR1, 0x000E) ; //Output Real_TIME_LINK_STATUS + TX_DISABLE_0
-	   maxWrite(REG_MAX_BMCR   , 0x1200) ; //Output Real_TIME_LINK_STATUS + TX_DISABLE_0
+	   maxWrite(REG_MAX_GPIOCR1, 0x000E) ; //Output Real_TIME_LINK_STATUS[Link /UP/or/down] + TX_DISABLE_0
+	   maxWrite(REG_MAX_BMCR   , 0x1200) ; 
 
 
 
-       Wait_MS_timer2(100);
-       NH_led=1;
-
+       Wait_MS_timer2(1000);               //Ждём 1 секунду
+       //NH_led=1;                           //Зажигаем Светодиод
+       NH_led=0; 
+  
        //maxWrite(enum RegMax regAddr, U16 value) 
  //       val = maxRead(REG_MAX_BMCR);
  //		val = maxRead(REG_MAX_BMSR);      //0x7949  
