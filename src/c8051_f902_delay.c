@@ -1,9 +1,9 @@
  /**********************************************************************************************************************
-*                                        (c) COPYRIGHT by PAO Inteltech.                                             *
+*                                        (c) COPYRIGHT by ZAO RCZI FORT.                                             *
 *                                               All rights reserved.                                                  *
 ***********************************************************************************************************************
-* Module      : bky_arm_delay.c
-* Description : Функции Работы с задержками и Таймеры
+* Module        :с8051_f902_delay.c
+* Description : Функции Работы с задержками Микроконтроллера 8051_f902
 * Author      : Konstantin Shiluaev
 ******************************************************************************
 ******************************************************************************
@@ -11,11 +11,9 @@
 * ============================
 * $State: Debug$
 * $Revision: 0.0.1 $
-* $Description: Первая ревизия блока работы с Задержками для 96 [мгЦ]
+* $Description: Первая ревизия блока работы с Задержками для 24.5 [мгЦ]
 * $Date: 2016/08/31 10:40:51 $
 * $Revision: 0.0.2 $
-*
-*
 ******************************************************************************/
 
 //------------------------------------------------------------------------------------------------------------------  
@@ -27,97 +25,54 @@
 #include <c8051_f902_delay.h>
 
 
+/*****************************************************************************
+Syntax:  void Timer1_Init(void)  
+Remarks: 8-bit counter/timer with autoreload Mode  SYSCLK 24500000  (24.5Mhz)  
+         for I2C Шина   
+*******************************************************************************/
+void Timer1_Init()
+ {
+	 // Make sure the Timer can produce the appropriate frequency in 8-bit mode
+	 // Supported SMBus Frequencies range from 10kHz to 100kHz. The CKCON register
+	 // settings may need to change for frequencies outside this range.
+	 #if ((SYSCLK/SMB_FREQUENCY/3) < 255)
+	 	 #define SCALE 1
+		 CKCON |= 0x08; // Timer1 clock source = SYSCLK	 
+	 #elif ((SYSCLK/SMB_FREQUENCY/4/3) < 255)
+	 	 #define SCALE 4
+	  	 CKCON |= 0x01;
+	 	 CKCON &= ~0x0A; // Timer1 clock source = SYSCLK / 4
+	 #endif
+
+
+	 TMOD = 0x20; // Timer1 in 8-bit auto-reload mode
+	 // Timer1 configured to overflow at 1/3 the rate defined by SMB_FREQUENCY
+	 TH1 = -(SYSCLK/SMB_FREQUENCY/SCALE/3);
+	 TL1 = TH1; // Init Timer1
+	 TR1 = 1; 	// Timer1 enabled
+ }
 
 
 
-/*****************************************************************************/
-/*  PRIVATE FUNCTIONS                                                        */
-/*****************************************************************************/
-
-
-
-
-//-------------------------------------------------------------------------------------------------------------------
 
 
 
 
 
-///////////////////Работа с Системным Таймером////////////////////
-/**************************************************************************************************
-Parameters:         void sys_timer_start_en_irq(uint8_t second)
-Remarks:            стартуем системный таймер с генерацией прерывания
-***************************************************************************************************/
-
-
-/**************************************************************************************************
-Parameters:         void sys_timer_start_dis_irq(uint16_t  millisecond)
-Remarks:            стартуем системный таймер без прерывания
-***************************************************************************************************/
-
-
-/**************************************************************************************************
-Parameters:         void sys_timer_stop ()
-Remarks:            останавливаем системный таймер
-***************************************************************************************************/
-
-
-/**************************************************************************************************
-Parameters:         void sys_timer_second_delay ()
-Remarks:            возвращаем значение текущего тика из регистра
-Description:        В данной функции вводим задржку от 1 до 60 секунд
-***************************************************************************************************/
 
 
 
-/**************************************************************************************************
-Parameters:         void sys_timer_millisecond_delay ()
-Remarks:            возвращаем значение текущего тика из регистра
-Description:        В данной функции вводим задржку от 1 до 1000 миллисекунд
-***************************************************************************************************/
 
-
-/**************************************************************************************************
-Parameters:         void sys_timer_microsecond_delay ()
-Remarks:            возвращаем значение текущего тика из регистра
-* 									Пока функция задержки реализована с разрешением 2 мКс  для частоты ЦПУ = 96 [мгЦ] 
-* 									Соответсвенно  in 1 *2    = 2[мКс]
-                    Соответсвенно  in 2 *2    = 4[мКс]
-                    Соответсвенно  in 10 *2   =20[мКс]
-                    Соответсвенно  in 12 *2   =24[мКс]
-                    Соответсвенно  in 25 *2   =50[мКс]
-                    Соответсвенно  in 98 *2   = 196[мКс]
-                    Соответсвенно  in 231 *2  = 462[мКс]
-                    Соответсвенно  in 342 *2  = 684[мКс]
-                    Соответсвенно  in 500 *2  = 1000[мКс]
-***************************************************************************************************/
+/////////////////////////////////////Функции Реализации Задержки используем Таймер_2///////////////////////////////
 
 /*******************************************************************************
-* Function Name  : SysTick_GetCounter
-* Description    : Gets SysTick counter value.
-* Input          : None
-* Output         : None
-* Return         : SysTick current value
+* Function Name  : void Wait_MS_timer2(unsigned int ms)  
+* Description    : 
+*    1) unsigned int ms - number of milliseconds of delay range is full range of integer: 0 to 65335
+*    This routine inserts a delay of <ms> milliseconds.
+*    [16-bit auto-reload mode] _ timer2  - >> [T2SPLIT_bit=0] TIMER_2_CN p.289  use SYSCLK 24500 
 *******************************************************************************/
-
-
-/////////////////////////////////////Функции Реализации Задержки///////////////////////////////
-//-----------------------------------------------------------------------------
-// Wait_MS
-//-----------------------------------------------------------------------------
-//
-// Return Value : None
-// Parameters:
-//   1) unsigned int ms - number of milliseconds of delay
-//                        range is full range of integer: 0 to 65335
-// This routine inserts a delay of <ms> milliseconds.
-// [16-bit auto-reload mode] _ timer2  - >> [T2SPLIT_bit=0] TIMER_2_CN p.289
-// use SYSCLK 24500 
-//
-//
-//
-//-----------------------------------------------------------------------------
-void Wait_MS_timer2(unsigned int ms)     //for 0 = 8 [мкс]
+void Wait_MS_timer2(unsigned int ms)     
 {
      CKCON = 0x10;                       //Timer use System CLK 24.5[Mhz]
 
@@ -128,25 +83,22 @@ void Wait_MS_timer2(unsigned int ms)     //for 0 = 8 [мкс]
      TMR2RL=60000;//61554;//20518; //41036;              //20518 - [8 мс] //61554 - [700 мКс] //64000 - 280[мКс] //65000 - 110[мКс] //65400 - 36[мКс]
      TMR2 = TMR2RL;                                      //65500 - [16 мКс] -- наступает предел GPIO pin
 
-     ET2 = 0;                             // Disable Timer 2 interrupts
-     TR2 = 1;                             // Start Timer 2
+     ET2 = 0;                            				 // Disable Timer 2 interrupts
+     TR2 = 1;                            				 // Start Timer 2
 
 	 while(ms)
 	 {
-	      TF2H = 0;                         // Clear flag to initialize
-	      while(!TF2H);                     // Wait until timer overflows
-	      ms--;                             // Decrement ms
+	      TF2H = 0;                         			// Clear flag to initialize
+	      while(!TF2H);                     			// Wait until timer overflows
+	      ms--;                             			// Decrement ms
 	 }
 
-	 TR2 = 0;                               // Stop Timer 2
+	 TR2 = 0;                               			// Stop Timer 2
  
 }
 /*******************************************************************************
-* Function Name  : SysTick_GetCounter
-* Description    : Gets SysTick counter value.
-* Input          : None
-* Output         : None
-* Return         : SysTick current value
+* Function Name  : void Wait_Sec_timer2(unsigned int second)
+* Description    : Задержка Секунды
 *******************************************************************************/
 void Wait_Sec_timer2(unsigned int second)
 {
@@ -155,11 +107,11 @@ void Wait_Sec_timer2(unsigned int second)
     //TMR2RL_ =   Timer_2 Reload  16 bit value  
     //TMR2    =   Timer_2 Counter 16 bit value
                                                     //60000 - [1 мс  !!Succesful!!]
-     TMR2RL=10;//1000;//20000;//60000;                  //10000 = 10 [мс]        //20000 - [8 мс  !!Succesful!!]
+     TMR2RL=10;//1000;//20000;//60000;              //10000 = 10 [мс]        //20000 - [8 мс  !!Succesful!!]
      TMR2 = TMR2RL;                                  //1000 - 12 [мс]    
 
-     ET2 = 0;                             // Disable Timer 2 interrupts
-     TR2 = 1;                             // Start Timer 2
+     ET2 = 0;                             			// Disable Timer 2 interrupts
+     TR2 = 1;                             			// Start Timer 2
 
 	 while(second)
 	 {
@@ -177,19 +129,11 @@ void Wait_Sec_timer2(unsigned int second)
 
 /**************************************************************************************************
 Parameters:  void while_delay(uint32_t  counter);       
-Remarks:    //Поправки к вызовам функций при разных значениях (входа)  cколько стоит 1 while                                         
-																				    //while						 [24 Мгц]                	множитель *7	[168 МгЦ]
- 																					//1    =    	   ~1 мкс      -          		   ~ 160  [нс]
-																					//10   =    	   ~3 мкс      -
-																					//100  =    	   ~20 мкс     -          			
-																					//500  =  	       ~80 мкс     -                  
-																					//800  =  	     ~140 мкс    -
-																					//1000 =  	     ~170 мкс    -                  ~   24 [мкс]
-
-																					//если нужны нано секунды то используем этот таймер по while
-																					// -  множитель *4     [96 Мгц] 
-																					//1 мкс = 10 [while]
-																					//2 мкс = 40 [while] 
+*Меньше нельзя
+*Предел Работы ножек GPIO это Период T = 80 [мКс] соответсвенно половинка = 40 [мКс]
+*while_delay(2);=40; while_delay(2); = 40[мКс]   = 80 [мКс] полный период T 
+*while_delay(4);=70; while_delay(4); = 70[мкс]   = 140 [мКс]  
+*while_delay(6);=100; while_delay(4); = 100[мкс] = 200 [мКс] 6=100 [мКс]
 
 ***************************************************************************************************/
 void  while_delay(unsigned long counter)
@@ -203,47 +147,14 @@ void  while_delay(unsigned long counter)
 }	
 
 
-//-----------------------------------------------------------------------------
-// void test_delay()
-//-----------------------------------------------------------------------------
+/*******************************************************************************
+* Function Name  : void test_delay()
+* Description    : Задержка Секунды
+*******************************************************************************/
 void test_delay()
 {
     
 
 }
-//-----------------------------------------------------------------------------
-// T0_Waitms
-//-----------------------------------------------------------------------------
-//
-// Return Value : None
-// Parameters   :
-//   1) U8 ms - number of milliseconds to wait range is full range of character: 0 to 255
-// Configure Timer0 to wait for <ms> milliseconds using SYSCLK as its time
-// base.
-//
-//-----------------------------------------------------------------------------
-/*
-void T0_Waitms (unsigned int ms)
-{
-   TCON &= ~0x30;                      // Stop Timer0; Clear TF0
-   TMOD &= ~0x0f;                      // 16-bit free run mode
-   TMOD |=  0x01;
-
-   CKCON |= 0x04;                      // Timer0 counts SYSCLKs
-
-   while (ms)
-   {
-      TR0 = 0;                         // Stop Timer0
-      TH0 = ((-SYSCLK/1000) >> 8);     // Overflow in 1ms
-      TL0 = ((-SYSCLK/1000) & 0xFF);
-      TF0 = 0;                         // Clear overflow indicator
-      TR0 = 1;                         // Start Timer0
-      while (!TF0);                    // Wait for overflow
-      ms--;                            // Update ms counter
-   }
-
-   TR0 = 0;                            // Stop Timer0
-}
-*/
 
 

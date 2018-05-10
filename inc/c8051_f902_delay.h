@@ -1,5 +1,5 @@
 /**********************************************************************************************************************
-*                                        (c) COPYRIGHT by AO NPK PELENGATOR.                                          *
+*                                        (c) COPYRIGHT by ZAO RCZI Fort.                                          *
 *                                               All rights reserved.                                                  *
 ***********************************************************************************************************************
 * Module      : bky_arm_delay.h
@@ -16,9 +16,13 @@
 #ifndef __C8051_F902_DELAY_H
 #define __C8051_F902_DELAY_H
 
+          //Параметры нашеё Системы   
+          #define   SYSCLK          24500000L 
+          //I2C Frequency 100 Khz (100000hz)
+		  #define SMB_FREQUENCY     100000 		 //Target SCL clock rate This example supports in 100kHz (I2C bus)
+
 
 //
-
 //#ifdef __cplusplus
 //extern "C" {
 //#endif
@@ -84,27 +88,24 @@
 
  ///////////////////////////Работа Системного Таймера/////////////////////////////////
  /*
- Старт Работы Системного таймера осуществляеться при инициализации мы должны выбрать тип используемого
- таймер в bky_arm_delay.h  																			//#define SYSTIMER_MICROSECOND           1   //Микросекунды
-																									//#define SYSTIMER_MILLISECOND           1   //Миллисекунды
-																									//#define SYSTIMER_SECOND                1   //Секунды
  в зависимости от выбранной частоты процессора тактирование таймера осуществляеться от HCLK=CPUC3 т.е работает с
  частотой процессора в текущий момент работаем на частоте 24 мГц тогда если мы разрешаем прерывание от системного
  таймера одно прерывание соответсвенно 1 микросекунда =1 прерывние;1 миллисекунда = 1 прерывание ; 0.5 секунд =1 прерывние.
   */
  //
-void T0_Waitms(unsigned int ms);
-
 
 void Wait_MS_timer2(unsigned int ms);
 void Wait_Sec_timer2(unsigned int second);
-void Wait_microsecond_timer2(unsigned int microsecond);
+
 //Функции работы с временем вспомогательные
 /*функция задержки в количестве while */
 void  while_delay(unsigned long counter);
 /*функция задержки системного таймера в тиках 0-16 777 215  при частоте 24 или 96 мГц */
 //void  sys_timer_delay_ticks(unsigned int ticks);                   //
 void test_delay();
+
+
+void Timer1_Init();  //Таймер_1 для I2C Шины
 
 
 //Функции работы с системным Таймером (SYSTIMER)
