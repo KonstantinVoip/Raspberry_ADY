@@ -30,14 +30,19 @@
 		                           // not have any defined slave states)
 
 
+//SFP Module   BASE Page
 // Device addresses (7 bits, lsb is a don't care) //optical module
-//#define  EEPROM_ADDR    0xA0       // Device address for slave target Note: This address is specified in the Microchip 24LC02B
-		                            // datasheet.
+#define  EEPROM_ADDR      0xA0       // Device address for slave target Note: This address is specified in the Microchip 24LC02B
+		                           // datasheet.
 
+		  
+		  
+//#define  EEPROM_ADDR    0xA2    //Extended SFP Module PAGE Address   	  
+		  
 		       		
 // Device addresses (7 bits, lsb is a don't care)   //EEPROM in KN-019 device
-#define  EEPROM_ADDR    0xA6          				// Device address for slave target  Note: This address is specified in the Microchip 24LC02B
-		                                       		// datasheet.
+//#define  EEPROM_ADDR    0xA6          				//Device address for slave target  Note: This address is specified in the Microchip 24LC02B
+		                                       		//datasheet.
 
 
     		//rab_variant
@@ -136,40 +141,34 @@ Remarks:
 * This function returns a single byte from location <addr> in the EEPROM then
 * polls the <SMB_BUSY> flag until the read is complete.
 *******************************************************************************/
-unsigned char SMBus_ByteRead(unsigned char addr)
+void i2c_readreg (const unsigned char *i2c_reg_addr,unsigned char *i2c_out_reg_val)
 {
-   unsigned char retval=0x00;               // Holds the return value
 
-   while (SMB_BUSY);                        // Wait for SMBus to be free.
-   SMB_BUSY = 1;                            // Claim SMBus (set to busy)
+
+   while (SMB_BUSY);                // Wait for SMBus to be free.
+   SMB_BUSY = 1;                    // Claim SMBus (set to busy)
 
    // Set SMBus ISR parameters
-   TARGET = EEPROM_ADDR;                   // Set target slave address
-   SMB_RW = WRITE;                         // A random read starts as a write
-                                       	   // then changes to a read after
-                                           // the repeated start is sent. The
-                                           // ISR handles this switchover if
-                                           // the <SMB_RANDOMREAD> bit is set.
-   SMB_SENDWORDADDR = 1;                   // Send Word Address after Slave Address
-   SMB_RANDOMREAD = 1;                     // Send a START after the word address
-   SMB_ACKPOLL = 1;                        // Enable Acknowledge Polling
+   TARGET = EEPROM_ADDR;            // Set target slave address
+   SMB_RW = WRITE;                  // A random read starts as a write
+                                    // then changes to a read after
+                                    // the repeated start is sent. The
+                                    // ISR handles this switchover if
+                                    // the <SMB_RANDOMREAD> bit is set.
+   SMB_SENDWORDADDR = 1;            // Send Word Address after Slave Address
+   SMB_RANDOMREAD = 1;              // Send a START after the word address
+   SMB_ACKPOLL = 1;                 // Enable Acknowledge Polling
 
 
    // Specify the Incoming Data
-   WORD_ADDR = addr;                      // Set the target address in the
-                                          // EEPROM's internal memory space
-
-   pSMB_DATA_IN = &retval;                // The incoming data pointer points to
-                                          // the <retval> variable.
-
-   SMB_DATA_LEN = 1;                      // Specify to ISR that the next transfer
-                                          // will contain one data byte
-
+   WORD_ADDR = *i2c_reg_addr;       // Set the target address in the EEPROM's internal memory space
+   pSMB_DATA_IN = i2c_out_reg_val;  // The incoming data pointer points to the <retval> variable.
+   
+   SMB_DATA_LEN = 1;                // Specify to ISR that the next transfer will contain one data byte
+                                    // will contain one data byte
    // Initiate SMBus Transfer
    STA = 1;
-   while(SMB_BUSY);                      // Wait until data is read
-
-   return retval;
+   while(SMB_BUSY);                 // Wait until data is read
 
 }
 
@@ -254,12 +253,12 @@ void SMBUS_ISR (void) interrupt 7
 		    // Master Transmitter: Data byte (or Slave Address) transmitted
             case SMB_MTDB:
 						     
-                  if(ACK/*REG_SMB0CN_BIT_BUS_Acknowelege*/)  						
+                  if(ACK)  						
 				  {
 										
 					     if(SEND_START)
 						 {
-                        	STA=1;				//REG_SMB0CN_BIT_BUS_START	= 1;  //STA =1;
+                        	STA=1;							//REG_SMB0CN_BIT_BUS_START	= 1;  //STA =1;
                        		SEND_START = 0;
                         	break;											 
                      	 }
@@ -332,18 +331,14 @@ void SMBUS_ISR (void) interrupt 7
                         SMB_BUSY = 0;              			 // Free SMBus interface
 						ACK=0;
 						STO=1;
-						//REG_SMB0CN_BIT_BUS_Acknowelege =0;    //ACK 
-                        //REG_SMB0CN_BIT_BUS_STOP        =1;    //STO Stop Transfer on I2C
                     }											
 						
 											
 						break;
 						
 			//Default Fail 
-			default:
-			
-			 FAIL = 1;                     // Indicate failed transfer and handle at end of ISR
-			
+			default:	
+			FAIL = 1;                     // Indicate failed transfer and handle at end of ISR
 			break;
 						
           }
@@ -352,22 +347,14 @@ void SMBUS_ISR (void) interrupt 7
 		  if(FAIL) 
 		  {
           	 SMB0CF &= ~0x80;                   // Reset communication
-			 SMB0CF  |= 0x80;  
-					
-			
+			 SMB0CF  |= 0x80;  				
 			 STO=0;
              STA=0;
 			 ACK=0;  
-			//REG_SMB0CN_BIT_BUS_STOP        =0;     //STO
-			//REG_SMB0CN_BIT_BUS_START       =0;     //STA
-			//REG_SMB0CN_BIT_BUS_Acknowelege =0;     //ACK 
             FAIL = 0;
-         }  					
-
-    //Clear interrupt flag SI on register 
-    //REG_SMB0CN_BIT_BUS_INT=0;
+          }  					
+      //Clear interrupt flag SI on register 
       SI=0;   
-
 }
 
 
@@ -379,66 +366,7 @@ Remarks:
 *******************************************************************************/
 void test_kn19_single_byte_read_array()
 {
-     	unsigned char temp_char=0x00;            // Temporary variable
-		bit error_flag = 0;                 	 // Flag for checking EEPROM contents
-	
-		
-	   //Test EEPROM for KN_019
-
-	
-		   // Write the value 0xAA to location 0x25 in the EEPROM
-		   // Read the value at location 0x25 in the EEPROM
-		   temp_char = SMBus_ByteRead(0x00);
-           temp_char = SMBus_ByteRead(0x01);
-		   temp_char = SMBus_ByteRead(0x02);
-		   temp_char = SMBus_ByteRead(0x03);
-		   temp_char = SMBus_ByteRead(0x04);
-		   temp_char = SMBus_ByteRead(0x05);
-		   temp_char = SMBus_ByteRead(0x06);
-		   temp_char = SMBus_ByteRead(0x07);
-		   temp_char = SMBus_ByteRead(0x08);
-		   temp_char = SMBus_ByteRead(0x10);
-           temp_char = SMBus_ByteRead(0x20);
-		   temp_char = SMBus_ByteRead(0x02);
-		   temp_char = SMBus_ByteRead(0x60);
-		   temp_char = SMBus_ByteRead(0x61);
-		   temp_char = SMBus_ByteRead(0x62);
-		   temp_char = SMBus_ByteRead(0x63);
-		   temp_char = SMBus_ByteRead(0x64);
-		   temp_char = SMBus_ByteRead(0x65); 
-           
-
-
-		   // Check that the data was read properly
-		   //if (temp_char != 0x55)
-		   //{
-		    //  error_flag = 1;
-		   //}
-
-		   // Write the value 0xBB to location 0x25 in the EEPROM
-		   //EEPROM_ByteWrite(0x25, 0xBA);
-
-		   // Write the value 0xCC to location 0x38 in the EEPROM
-		   //EEPROM_ByteWrite(0x38, 0xCA);
-
-		   // Read the value at location 0x25 in the EEPROM
-		   //temp_char = EEPROM_ByteRead(0x01);
-
-		   // Check that the data was read properly
-		   //if (temp_char != 0x99)
-		   //{
-		    //  error_flag = 1;
-		  // }
-
-		   // Read the value at location 0x38 in the EEPROM
-		   //temp_char = EEPROM_ByteRead(0x10);
-
-		   // Check that the data was read properly
-		   //if (temp_char != 0x0E)
-		  // {
-		    //  error_flag = 1;
-		  // }
-
+   
 
 }
 

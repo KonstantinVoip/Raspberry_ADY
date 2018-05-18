@@ -2,8 +2,8 @@
 *                                        (c) COPYRIGHT by ZAO RCZI Fort.                                          *
 *                                               All rights reserved.                                                  *
 ***********************************************************************************************************************
-* Module      : bky_arm_delay.h
-* Description : Работа с Задержками 1986ВЕ91Т
+* Module      : с8051_f902_delay.h
+* Description : Работа с Задержками и Описание Параметров нашей Системы.
 * Author      : Konstantin Shiluaev
 ******************************************************************************
 ******************************************************************************
@@ -16,11 +16,18 @@
 #ifndef __C8051_F902_DELAY_H
 #define __C8051_F902_DELAY_H
 
-          //Параметры нашеё Системы   
-          #define   SYSCLK          24500000L 
-          //I2C Frequency 100 Khz (100000hz)
-		  #define SMB_FREQUENCY     100000 		 //Target SCL clock rate This example supports in 100kHz (I2C bus)
 
+          //////////Параметры Системы нашей//////////
+
+
+
+          //Частота CPU C8051_F902   
+          #define   SYSCLK          24500000L    //24.5 [МгЦ]
+          //I2C Frequency 100 Khz (100000hz)
+		  #define SMB_FREQUENCY     100000 		 //Частота Работы шины I2C  _100 [Кгц]
+          //SPI CLK Frequency 500 Khz
+          #define SPI_CLOCK         500000       //Частота Работы шины SPI  _500 [Кгц]
+         
 
 //
 //#ifdef __cplusplus
@@ -108,13 +115,6 @@ void test_delay();
 void Timer1_Init();  //Таймер_1 для I2C Шины
 
 
-//Функции работы с системным Таймером (SYSTIMER)
-/*старт ситемноо таймера с генерацией прерывания*/
-//void sys_timer_start_en_irq(void);
-/*старт ситемноо таймера без генерации прерывания*/
-//void sys_timer_start_dis_irq(void);
-/*остановка системного таймера*/
-//void sys_timer_stop(void);  
 
 
 /*функция взять текущий тик*/
@@ -140,26 +140,6 @@ void Timer1_Init();  //Таймер_1 для I2C Шины
 
 /*берём текущее количество тиков из регистра*/
 //unsigned int sys_timer_getCounter(void);                         
-
-
-///////////////////////////Работа c 16 разрядным Таймером_1  /////////////////////////
-//Таймер _1 прерывние будет работать через 1 [мс]
-//void timer1_start(void);
-//void timer1_stop (void);
-///////////////////////////Работа c 16 разрядным Таймером_2 /////////////////////////
-//void timer2_start(void);
-//void timer2_stop (void);
-///////////////////////////Работа c 16 разрядным Таймером_3 /////////////////////////
-//void timer3_start(void);
-//void timer3_stop (void);
-
-
-
-
-
-
-
-
 
 
  //Другие функции

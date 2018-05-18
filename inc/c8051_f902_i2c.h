@@ -21,8 +21,16 @@
 void SMBus_Init ();
 void SMBus_ISR  ();
 
+
+
 void SMBus_ByteWrite(unsigned char addr, unsigned char dat);
-unsigned char SMBus_ByteRead(unsigned char addr);
+//unsigned char SMBus_ByteRead(unsigned char addr);
+
+
+void i2c_readreg (const unsigned char *i2c_reg_addr,unsigned char *i2c_out_reg_val); //чтение по шине I2C с С8051А902
+void i2c_writereg(const unsigned char *i2c_reg_addr,const unsigned char *i2c_in_reg_addr);//запись I2C
+
+
 
 
 //Тестовые Функции

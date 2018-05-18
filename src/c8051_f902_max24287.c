@@ -97,7 +97,7 @@ void init_max_24287()
        maxWrite(REG_MAX_PTPCR1, 0x4004) ;  
 	 
 	  /* Wait 2ms */
-	  Wait_MS_timer2(2);
+	   Wait_MS_timer2(2);
      /* Write 0x4000 to PTPCR1 to power-up the receive CDR */
     // mdioWrite(PHY_ADDR, REG_MAX_PTPCR1 & REG_ADDR_MASK, 0x4000);
        maxWrite(REG_MAX_PTPCR1, 0x4000); 
