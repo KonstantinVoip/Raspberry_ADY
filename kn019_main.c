@@ -4,7 +4,7 @@
 * Hardware Environment:	
 * Build Environment   : 
 * Version             : ревизия 0.3 от 18.05.2018 если нужно будем развивать шить этот вариант
-* By                  : 
+* By                  : Konstantin Shiluaev
 *********************************************************************************************************/
 #include <compiler_defs.h>    
 #include <C8051F912_defs.h>
